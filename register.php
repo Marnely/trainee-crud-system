@@ -4,22 +4,29 @@ $mensahe = "";
 
 if (isset($_POST['register'])) {
   $username = $_POST['username'];
-  // I-encrypt ang password gamit ang password_hash() para sa seguridad
   $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
 
-  $sql = "INSERT INTO users (username, password) VALUES ('$username', '$password')";
-  if ($conn->query($sql) === TRUE) {
-    $mensahe = "Matagumpay ang pagre-register! <a href='login.php'>Mag-login dito</a>";
+  // 1. Ihanda ang SQL template gamit ang '?' bilang placeholder
+  $stmt = $conn->prepare("INSERT INTO users (username, password) VALUES (?, ?)");
+  
+  // 2. Ikabit ang dalawang String ("ss") sa mga placeholders
+  $stmt->bind_param("ss", $username, $password);
+
+  // 3. Patakbuhin ang ligtas na query
+  if ($stmt->execute()) {
+    $mensahe = "Matagumpay at ligtas ang pagre-register! <a href='login.php'>Mag-login dito</a>";
   } else {
-    $mensahe = "Error: " . $conn->error;
+    $mensahe = "Error: " . $stmt->error;
   }
+  
+  $stmt->close();
 }
 ?>
 
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Mag-register ng Account</title>
+  <title>Secure Registration</title>
   <style>
     body { font-family: Arial, sans-serif; background-color: #f0f4f8; padding: 50px; }
     .box { background: white; padding: 25px; border-radius: 8px; width: 320px; margin: 0 auto; border: 1px solid #cbd5e1; }
@@ -29,7 +36,7 @@ if (isset($_POST['register'])) {
 </head>
 <body>
   <div class="box">
-    <h3>Gumawa ng Account</h3>
+    <h3>Secure Account Registration</h3>
     <?php if ($mensahe != "") { echo "<p style='color: green;'>$mensahe</p>"; } ?>
     <form method="POST">
       <label>Username:</label>
